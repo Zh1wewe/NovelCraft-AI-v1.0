@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NovelWritingAIToolsSpec",
+  "description": "智能小说创作工作坊人工智能模型本地运行/写作辅助的外部工具规范与JSON约束。AI在识别到需要修改、重写或编排大纲等行为时，必须严格按照此JSON中定义的格式与特定action字段进行匹配调用，并使用 <args>...</args> 包裹。",
+  "tools": [
+    {
+      "name": "replace_chapter_text",
+      "action": "replace_chapter_text",
+      "description": "章节正文主笔改写与精修。用于精修、润色或全文重写特定章节段落正文文本修改。此操作支持完美撤销。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["replace_chapter_text"],
+            "description": "固定为 'replace_chapter_text'"
+          },
+          "chapterId": {
+            "type": "string",
+            "description": "目标修改的章节ID"
+          },
+          "oldText": {
+            "type": "string",
+            "description": "待替换的原始正文字符串片段。必须在正文中确实存在，以便定位"
+          },
+          "newText": {
+            "type": "string",
+            "description": "修改重润、重写或补全后的精彩正文文稿新内容"
+          }
+        },
+        "required": ["action", "chapterId", "oldText", "newText"]
+      },
+      "example": "<args>{\"action\": \"replace_chapter_text\", \"chapterId\": \"ch-1\", \"oldText\": \"那艘飞船在太空中静止着，看起来毫无生气。\", \"newText\": \"破损的幽灵级重巡洋舰无声地漂浮在深渊般的奥尔特星云边缘，冰冷的反应堆不再喘息，宛如一座死寂的钢铁墓碑。\"}</args>"
+    },
+    {
+      "name": "create_story_node",
+      "action": "create_story_node",
+      "description": "小说大纲/思维导图：新建大纲情节节点。在创作主轴或副线大纲树状图上，创建新的章节、线索点或主要事件节点。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_story_node"],
+            "description": "固定为 'create_story_node'"
+          },
+          "parentId": {
+            "type": ["string", "null"],
+            "description": "父级大纲节点ID。如果是根大纲节点或主轴，可以传 null"
+          },
+          "title": {
+            "type": "string",
+            "description": "新大纲节点的标题或关键枢纽点名称"
+          },
+          "summary": {
+            "type": "string",
+            "description": "极其精炼的一句话剧情梗概，显示在思维导图卡片上"
+          },
+          "content": {
+            "type": "string",
+            "description": "该剧情节点/章节的详细故事情节走向。起承转合和关键冲突的详细起草说明"
+          }
+        },
+        "required": ["action", "parentId", "title", "summary", "content"]
+      },
+      "example": "<args>{\"action\": \"create_story_node\", \"parentId\": \"node-root-plot\", \"title\": \"第四章：黑洞视界夺还战\", \"summary\": \"两军在暗物质风暴边缘遭遇，爆发旗舰强袭登舰战。\", \"content\": \"潜行侦察舰捕获了旧帝国的相位诱导信号，主角团决定趁暗物质风暴掩护，派出近卫机装机甲强袭空降中央星港，夺回被劫持的空间桥控制器。\"}</args>"
+    },
+    {
+      "name": "update_story_node",
+      "action": "update_story_node",
+      "description": "修改现有小说大纲节点。实时更新、润色或扩充现有大纲中某项情节卡片的标题、一句话摘要或详细起承转合设定，并同步思维导图与大纲视图。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["update_story_node"],
+            "description": "固定为 'update_story_node'"
+          },
+          "nodeId": {
+            "type": "string",
+            "description": "目标修改的大纲卡片/情节节点ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "重命名的更具戏剧性吸引力的大纲标题"
+          },
+          "summary": {
+            "type": "string",
+            "description": "更新后显示在大脑皮层拓扑图/思维导图上的一句话摘要"
+          },
+          "content": {
+            "type": "string",
+            "description": "重塑和扩充后的详细情节、逻辑推导及转折描写"
+          }
+        },
+        "required": ["action", "nodeId"]
+      },
+      "example": "<args>{\"action\": \"update_story_node\", \"nodeId\": \"node-ch-3-climax\", \"title\": \"第三章：量子审判的终章\", \"summary\": \"林默在星屑遗体前破解了最后的古文明密匙，揭晓救世法案真相\"}</args>"
+    },
+    {
+      "name": "delete_story_node",
+      "action": "delete_story_node",
+      "description": "删除错误/废弃大纲节点。从故事主轴思维导图和侧边大纲列表树上移除不需要的情节卡片、侧线分支或冲突点卡片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["delete_story_node"],
+            "description": "固定为 'delete_story_node'"
+          },
+          "nodeId": {
+            "type": "string",
+            "description": "目标删除的大纲卡片/情节节点ID"
+          }
+        },
+        "required": ["action", "nodeId"]
+      },
+      "example": "<args>{\"action\": \"delete_story_node\", \"nodeId\": \"node-redundant-conflict\"}</args>"
+    },
+    {
+      "name": "add_timeline_events",
+      "action": "add_timeline_events",
+      "description": "世界观构建：编年史大事件记录。为小说的编年史背景时间轴中注入一个或多个重大的历史神话/科技史纪元里程碑节点。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["add_timeline_events"]
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "string",
+                  "description": "年份、纪元标识，如：'航天历 340 年' 或 '黑暗中世纪'"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "历史事件的主题，如 '奥德修斯停电事故'"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "事件影响、人类命运变动或浩劫发生缘起详细纪事"
+                },
+                "importance": {
+                  "type": "string",
+                  "enum": ["critical", "major", "minor"],
+                  "description": "事件极其重要性级别"
+                }
+              },
+              "required": ["year", "title", "content"]
+            }
+          }
+        },
+        "required": ["action", "events"]
+      },
+      "example": "<args>{\"action\": \"add_timeline_events\", \"events\": [{\"year\": \"星海纪 1024 年\", \"title\": \"零重力大撕裂案\", \"content\": \"环星轨道电梯拉伸平衡锁断裂，引发了地表到同步轨道的狂暴火海，导致重力发生器全部停摆...\", \"importance\": \"critical\"}]}</args>"
+    },
+    {
+      "name": "update_world_rules",
+      "action": "update_world_rules",
+      "description": "完善/更新世界设定中抽象的核心法则、宗门守则、超现实物理法则或科技秩序等基础设定的顶层设计规则，用于AI逻辑推理避错。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["update_world_rules"]
+          },
+          "worldRules": {
+            "type": "string",
+            "description": "更新后甚至完整的，包含条目化（1,2,3）或系统化的全局科学/魔法等世界顶层法则内容"
+          }
+        },
+        "required": ["action", "worldRules"]
+      },
+      "example": "<args>{\"action\": \"update_world_rules\", \"worldRules\": \"1. 质量不可逾越法则：任何携带亚原子意识的物体在穿越本宇宙微虫洞时，其质量增量不得大于1%，否则将诱发奇点崩塌。\\n2. 熵减契约：超能力拥有者生命流逝随每一次粒子共振加快...\"}</args>"
+    },
+    {
+      "name": "create_concept_category",
+      "action": "create_concept_category",
+      "description": "概念设计：创建新的插图/概念图子分类目录。以便归纳特定设定的画面。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_concept_category"],
+            "description": "固定为 'create_concept_category'"
+          },
+          "name": {
+            "type": "string",
+            "description": "新分类子目录文件夹名称，例如：'核心人物形象'、'宇宙飞船机械'、'遗迹建筑'、'名场面插画'"
+          }
+        },
+        "required": ["action", "name"]
+      },
+      "example": "<args>{\"action\": \"create_concept_category\", \"name\": \"源星号旗舰内部设定\"}</args>"
+    },
+    {
+      "name": "save_concept_image",
+      "action": "save_concept_image",
+      "description": "概念设计：向指定概念分类分类保存/录入一张最新的图片（可以是图片URL或Base64地址、生成的图片地址等）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["save_concept_image"],
+            "description": "固定为 'save_concept_image'"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "目标分类目录的ID。如果暂不知道ID，可传空，由系统默认存入第一项"
+          },
+          "url": {
+            "type": "string",
+            "description": "要保存的图片直链URL or Base64字符串。如用户指示将生成的哪张图作为灵感保存，将其放入此参数"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "该张概念大图的文字描述/生成提示词"
+          }
+        },
+        "required": ["action", "url", "prompt"]
+      },
+      "example": "<args>{\"action\": \"save_concept_image\", \"categoryId\": \"cat-1\", \"url\": \"data:image/jpeg;base64,...\", \"prompt\": \"末日飞船在星系边缘跃迁的引擎特写\"}</args>"
+    },
+    {
+      "name": "search_library_files",
+      "action": "search_library_files",
+      "description": "本地小说库操作：罗列/过滤小说库及物理设定册、参考库、草稿中的所有txt/md文本文件路径，用以发现需要处理的目标文件。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["search_library_files"],
+            "description": "固定为 'search_library_files'"
+          },
+          "query": {
+            "type": "string",
+            "description": "筛选关键词，可按文件名筛选。例如'克苏鲁'、'人物设定'，或为空表示罗列整个目录库"
+          }
+        },
+        "required": ["action"]
+      },
+      "example": "<args>{\"action\": \"search_library_files\", \"query\": \"克苏鲁\"}</args>"
+    },
+    {
+      "name": "read_library_file",
+      "action": "read_library_file",
+      "description": "本地小说库操作：读取本地选中的特定物理文本文件的内容（文件相对路径可以通过搜索检索库文件获得）。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["read_library_file"],
+            "description": "固定为 'read_library_file'"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "要读取的目标文本文件相对路径。例如 '参考资料库/克苏鲁神秘学引论.txt'"
+          }
+        },
+        "required": ["action", "filePath"]
+      },
+      "example": "<args>{\"action\": \"read_library_file\", \"filePath\": \"参考资料库/克苏鲁神秘学引论.txt\"}</args>"
+    },
+    {
+      "name": "edit_library_file",
+      "action": "edit_library_file",
+      "description": "本地小说库操作：修改、覆盖或在小说本地库的某个文本文件尾部追加录入新的文字信息设定。该提案将向用户发起弹窗修改提案申请，用户点击确认后自动一键生效并保存到本地物理硬盘中。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["edit_library_file"],
+            "description": "固定为 'edit_library_file'"
+          },
+          "filePath": {
+            "type": "string",
+            "description": "要修改录入的目标本地物理文件相对路径。例如 '参考资料库/克苏鲁神秘学引论.txt'"
+          },
+          "content": {
+            "type": "string",
+            "description": "要写入本地物理文本文件的内容（如果要追加写入，可置mode参数为append）"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["append", "overwrite"],
+            "description": "写入模式：'append'(在文件结尾换行追加写入信息设定), 'overwrite'(清空并重写文件内容)。默认为 'append'"
+          }
+        },
+        "required": ["action", "filePath", "content"]
+      },
+      "example": "<args>{\"action\": \"edit_library_file\", \"filePath\": \"参考资料库/克苏鲁神秘学引论.txt\", \"content\": \"克苏鲁其实是假的。\", \"mode\": \"append\"}</args>"
+    },
+    {
+      "name": "batch_sync_outline",
+      "action": "batch_sync_outline",
+      "description": "小说大纲生成保存：一键批量将多个情节或篇章大纲节点保存更新至前端的「大纲时间线」架构视图中。当你重新生成、修改了整个章节大纲或者剧情大纲流，用户请求【保存到大纲/入大纲树/保存大纲】时，务必调用此指令。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["batch_sync_outline"],
+            "description": "固定为 'batch_sync_outline'"
+          },
+          "nodes": {
+            "type": "array",
+            "description": "按故事发生先后顺序排列的大纲节点列表",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string", "description": "剧情节点标题" },
+                "summary": { "type": "string", "description": "一句话精炼概括剧情冲突" },
+                "content": { "type": "string", "description": "该剧情节点的详细内容、起承转合及冲突变化" },
+                "timeLabel": { "type": "string", "description": "剧情时间线或顺序标签，例如：'初始'、'第一幕'、'高潮' 等，仅供阅读参考" }
+              },
+              "required": ["title", "summary", "content"]
+            }
+          }
+        },
+        "required": ["action", "nodes"]
+      },
+      "example": "<args>{\"action\": \"batch_sync_outline\", \"nodes\": [{\"title\": \"第一幕：降临\", \"summary\": \"失去记忆的主角降临旧星市\", \"content\": \"主角在暴雨中醒来...\", \"timeLabel\": \"第一天\"}]}</args>"
+    }
+  ]
+}

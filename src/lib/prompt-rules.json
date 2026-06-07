@@ -1,0 +1,12 @@
+{
+  "shortenPrompts": true,
+  "hideTechnicalPreamble": true,
+  "aiOutputFilter": {
+    "mode": "clean_modified_only",
+    "explanation": "对于重写润色任务，忽略多余客套，只把改写后的内容以及执行参数放于<args>里面。若有解释和评论，应当极其精简并在50字以内，不喧宾夺主。"
+  },
+  "rewritePrefix": "【重写请求】",
+  "discussPrefix": "【情节讨论与意见见解】",
+  "queryPrefix": "【情节逻辑疑问解答】",
+  "systemInstructions": "只在必要时提供对设定或小说的文字修改。在重写或改写时，AI只在<args>...</args>格式中包好修改内容。在对话展示中，冗余、繁杂、拼合和指令的内部机械代码将由本地解析器隐藏过滤，仅展示修改前后的文学美感及对比反馈。"
+}
