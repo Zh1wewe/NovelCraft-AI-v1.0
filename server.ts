@@ -47,7 +47,7 @@ function ensureDirsAndFiles() {
   }
 
   // Pre-populate physical workspace directories for the default novel is also important
-  const defaultNovelName = "末日迷雾：源星者";
+  const defaultNovelName = "新建项目 1";
   const defaultNovelDir = path.join(UPLOADS_BASE, defaultNovelName);
   if (!fs.existsSync(defaultNovelDir)) {
     fs.mkdirSync(defaultNovelDir, { recursive: true });
@@ -67,37 +67,6 @@ function ensureDirsAndFiles() {
     const subDirP = path.join(defaultNovelDir, sub);
     if (!fs.existsSync(subDirP)) {
       fs.mkdirSync(subDirP, { recursive: true });
-    }
-  }
-
-  // Create some initial files for first-time use
-  const demoFiles = [
-    {
-      path: "未分组/示例备忘录.txt",
-      content: "备忘：\n1. 今天的灵感是关于异界怪异迷雾的性质，可以写成带有放射性精神污染的效果。\n2. 人设「林源」的隐藏特质可以在第三章展露，他在噩梦中听到的心跳声并非幻听。"
-    },
-    {
-      path: "小说草稿/末日迷雾_前瞻试写.txt",
-      content: "第一章：迷雾降临\n\n源星，新联邦142年。\n当第一缕血色的月光穿透天空厚重的辐射尘埃时，废墟边缘的警报器撕心裂肺地嚎叫起来。\n林源站在电磁巡逻墙顶端，呼出的热气在极寒的气温下瞬间凝结。他眯起眼，望着从地平线尽头如滚滚怒潮般奔汹而至的，并非熟悉的黑色沙尘暴，而是一大片——猩红如血的迷雾..."
-    },
-    {
-      path: "核心设定集/法理与地理设定.md",
-      content: "# 世界观底线法理域\n\n1. **红雾能守恒定律**：红雾拥有实体化的精神扭曲能量，不可凭空消灭，只能被电磁高频波段驱散或储能蓄积。\n2. **电磁庇护所地理**：人类建立在巨型地壳热井之上的高墙聚落，通过消耗热井熔岩能量供给庞大的高频高压电磁屏障来维持无辐射及红雾驱散状态。"
-    },
-    {
-      path: "参考资料库/克苏鲁神秘学引论.txt",
-      content: "参考背景设定：\n克苏鲁神话中的神秘物种往往不注重物理形体的完整性，而是通过多维感知，在智慧个体的意识海中投影出特定的具象。所谓的‘接触’过程就是将个体的理智度（Sanity）向高维现实校准，而在这个校准过程中，脆弱的人类大脑往往会因为信息过载而陷入永久的崩溃与疯狂..."
-    },
-    {
-      path: "公共资料库/参考资料库/全本通用群戏文风规范.txt",
-      content: "公共资料库 - 文风参考资料规范：\n1. 主角发言应当内敛而坚定，善于运用细节观察判断，字里行间展现逻辑与张力。\n2. 场景渲染擅长描述机械巨构、荒芜废土与闪烁波动的灯火。笔触厚重硬核，切忌网络快餐化口语。\n3. 不同的小说分支都可以引用此通用文风，使人物的情绪爆发显得更加顺理成章、饱满富有层次。"
-    }
-  ];
-
-  for (const df of demoFiles) {
-    const dfPath = path.join(UPLOADS_BASE, df.path);
-    if (!fs.existsSync(dfPath)) {
-      fs.writeFileSync(dfPath, df.content, "utf-8");
     }
   }
 

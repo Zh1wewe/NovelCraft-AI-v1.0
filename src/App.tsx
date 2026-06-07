@@ -54,151 +54,26 @@ export const sortTimelineEvents = (timeline: any[]) => {
 };
 
 const INITIAL_CHAPTERS: Chapter[] = [
-  { id: '1', title: '设定集（必读）', isActive: false, content: '# 设定集\n\n**世界观**：旧世界的废墟上建立起了新的联邦，而源星者的出现将打破这种脆弱的平衡。\n\n**力量体系**：源星者，通过源星符文与旧世界机械产生共鸣。' },
-  { id: '2', title: '序幕：旧世界的余烬', isActive: false, content: '一片灰蒙蒙的废土沙暴中，一只巨大机械巨兽的骸骨半掩埋在沙丘里，林远正躲在骸骨空腔里躲避风沙。这是旧时代的造物，如今只剩下冰冷的外壳...' },
-  { id: '3', title: '第一章：觉醒', isActive: true, content: '古老的钟声在晨雾中回荡，敲碎了整夜的宁静。林远从沉睡中猛然惊醒，额头上布满冷汗。他环顾四周，这间简陋的木屋依旧如故，但空气中却弥漫着一丝说不清道不明的异样气息。\n\n昨夜那个梦境太过真实，梦中那棵燃烧的巨树，以及树下低语的神秘身影，至今仍在他脑海中挥之不去。他低头看向自己的右手掌心，那里不知何时出现了一个淡金色的奇异符文，正散发着微弱的律动。\n\n“这到底是什么……”林远喃喃自语，尝试用手指触碰那个符文。就在指尖接触的瞬间，一股庞大的信息流如潮水般涌入他的大脑，关于这个世界的另一面，关于‘源星者’的古老传说，在他眼前徐徐展开。' },
-  { id: '4', title: '第二章：迷雾生还者', isActive: false, content: '觉醒后的第二天，林远决定前往废弃的矿区寻找答案...' },
+  { id: '1', title: '新建章节 1', isActive: true, content: '' }
 ];
 
-const MOCK_MESSAGES: ChatMessage[] = [
-  {
-    id: '1',
-    role: 'user',
-    content: '我想在这章加入一个悬疑点，让林远发现符文不是自己独有的，还有其他人有。',
-    type: 'text',
-    tabContext: 'editor'
-  },
-  {
-    id: '2',
-    role: 'assistant',
-    content: '很好的想法！这可以有效扩展世界观。我提供了两个切入点方案：\n\n方案A：在木屋外的泥土里发现一个带着相同符文的金属牌残片。\n方案B：回忆起梦境中那个神秘身影的手背上，也有一模一样的符文。',
-    type: 'outline_proposal',
-    tabContext: 'editor'
-  },
-  {
-    id: '3',
-    role: 'user',
-    content: '根据前文林远的性格，你觉得哪种更合适？',
-    type: 'text',
-    tabContext: 'editor'
-  },
-  {
-    id: '4',
-    role: 'assistant',
-    content: '从他“谨慎、多疑”的人文设定（参考《林远设定-版本2》库文件）来看，方案A的物理证据能让他更直接地产生警惕，并且可以作为下一章的线索道具。推荐方案A。',
-    type: 'evaluation',
-    tabContext: 'editor'
-  },
-  {
-    id: '5',
-    role: 'system',
-    content: '✅ 已进入大纲视图。您可以要求我帮您构思新的悬疑节点或扩写剧情。',
-    type: 'text',
-    tabContext: 'outline'
-  },
-  {
-    id: '6',
-    role: 'system',
-    content: '✅ 已进入角色档案。需要我帮您设定新的出场人物或者分析角色动机吗？',
-    type: 'text',
-    tabContext: 'characters'
-  }
-];
+const MOCK_MESSAGES: ChatMessage[] = [];
 
-const MOCK_CHARACTERS: CharacterProfile[] = [
-  {
-    id: '1',
-    name: '林远',
-    role: '主角',
-    description: '原本只是底层劳工，在旧世界遗迹中意外觉醒了源星者能力。性格谨慎多疑，但内心深处保留着一抹对旧文明的向往。',
-    traits: ['谨慎', '多疑', '源星者', '适应力强']
-  },
-  {
-    id: '2',
-    name: '陈默',
-    role: '反派首脑/引导者',
-    description: '新联邦执行长，掌握着遗迹的垄断权，表面上温文尔雅，实际冷酷无情。曾经也是底层出身。',
-    traits: ['冷酷', '伪善', '智力极高', '旧文明迷']
-  }
-];
+const MOCK_CHARACTERS: CharacterProfile[] = [];
 
-const MOCK_NOTES: InspirationNote[] = [
-  {
-    id: '1',
-    content: '关于源星者的力量体系：\n不要写成烂俗的魔法，应该是一种[共振]现象，通过源星符文与旧世界机械产生共鸣，从而控制金属和电流。',
-    createdAt: '2026-06-01T10:00:00Z',
-    color: 'bg-indigo-50'
-  },
-  {
-    id: '2',
-    content: '序章的开局画面：\n一片灰蒙蒙的废土沙暴中，一只巨大机械巨兽的骸骨半掩埋在沙丘里，主角正躲在骸骨空腔里躲避风沙。',
-    createdAt: '2026-06-03T15:30:00Z',
-    color: 'bg-orange-50'
-  }
-];
+const MOCK_NOTES: InspirationNote[] = [];
 
-const MOCK_STORY_NODES: StoryNode[] = [
-  {
-    id: 'root-1',
-    title: '序章：遗迹发掘',
-    summary: '林远在废土区17号遗迹进行劳工作业。',
-    content: '在17号遗迹的深处，劳工们发现了某种未知的能量源。林远在意外坍塌中跌入最底层，接触到了古老的“源星符文”，从而觉醒。这里需要详细描写符文接触肉体时的能量共振现象，以及主角当时的心理活动（恐慌、迷茫、求生欲）。',
-    parentId: null
-  },
-  {
-    id: 'node-2',
-    title: '第一卷：逃离底城',
-    summary: '觉醒后被财阀追杀，结识反抗军。',
-    content: '觉醒的能量波动引来了新联邦执行长陈默的黑金卫队。林远被迫开启逃亡。在废土集市“黑硫镇”遭遇伏击，机缘巧合下被名为“夜枭”的反抗军小队救下。这里将引入世界观中“源星者”与普通人类之间的阶级矛盾。',
-    parentId: 'root-1'
-  },
-  {
-    id: 'node-3',
-    title: '支线：陈默的试探',
-    summary: '陈默发现林远的潜力，开始布局。',
-    content: '这段情节是从反派视角切入，陈默并不急于杀死林远，他从监控记录中发现了林远身上符文的高完整度，打算将其作为开启“核心塔”的钥匙之一从而进行放长线钓大鱼的试探。',
-    parentId: 'root-1'
-  }
-];
+const MOCK_STORY_NODES: StoryNode[] = [];
 
 const INITIAL_BACKGROUND: BackgroundSetting = {
-  worldRules: '这是根据设定的“世界观背景约束集.json”提取而来的基础构架。包含物理法则的改变、灵气/魔法的起源、社会组织的阶级分布等。',
-  geography: '这里可以上传地图图片，或者由 AI 协助生成城邦列表、遗迹坐标，并支持在图片上进行热区打点标注。',
-  timeline: [
-    { id: '1', year: '旧历 2099 年', event: '天火降临，旧世界文明毁灭。' },
-    { id: '2', year: '新历 1 年', event: '联邦建立，幸存者聚集于废墟之上。首批源星者觉醒。' },
-  ]
+  worldRules: '',
+  geography: '',
+  timeline: []
 };
 
-const INITIAL_SCHEMAS: LibrarySchema[] = [
-  {
-    id: 's1',
-    name: '人物设定标准Schema.json',
-    scope: 'novel',
-    description: '用于规范AI输出角色档案结构，以便本地程序自动解析。',
-    content: '{}'
-  },
-  {
-    id: 's2',
-    name: '思维导图提取Schema.json',
-    scope: 'global',
-    description: '将章节大纲或复杂设定提取为思维导图可视化数据格式（如 markdown或特定json树）。',
-    content: '{}'
-  },
-  {
-    id: 's3',
-    name: '世界观背景约束集.json',
-    scope: 'novel',
-    description: '当前小说的专属物理法则、魔法体系、重要历史事件约束。',
-    content: '{}'
-  }
-];
+const INITIAL_SCHEMAS: LibrarySchema[] = [];
 
-const INITIAL_CONCEPTS: ConceptCategory[] = [
-  { id: 'cat-1', name: '人物设定图', description: '用于存放所有角色的统一风格设定图', images: [] },
-  { id: 'cat-2', name: '地理环境概念', description: '主要城邦与废墟遗迹', images: [] },
-  { id: 'cat-3', name: '特殊物品概念图', description: '源星符文与旧世界遗物等', images: [] },
-];
+const INITIAL_CONCEPTS: ConceptCategory[] = [];
 
 export default function App() {
   const [activeTab, setActiveTab ] = useState<TabType>('editor');
@@ -502,7 +377,7 @@ export default function App() {
     } catch(e) {}
     return [{
       id: 'default-1',
-      name: '末日迷雾：源星者',
+      name: '新建项目 1',
       chapters: INITIAL_CHAPTERS,
       messages: MOCK_MESSAGES,
       characters: MOCK_CHARACTERS,
