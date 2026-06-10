@@ -14,7 +14,7 @@ function getAI() {
   return aiClient;
 }
 
-const CONFIG_FILE_PATH = path.join(process.cwd(), "workspace_config.json");
+const CONFIG_FILE_PATH = process.env.NC_CONFIG_PATH || path.join(process.cwd(), "workspace_config.json");
 
 function getUploadsBase(): string {
   try {
@@ -27,11 +27,11 @@ function getUploadsBase(): string {
   } catch (err) {
     console.error("Failed to read workspace_config.json, returning default:", err);
   }
-  return path.join(process.cwd(), "uploads");
+  return process.env.NC_UPLOADS_DIR || path.join(process.cwd(), "uploads");
 }
 
 let UPLOADS_BASE = getUploadsBase();
-const DIARY_FILE_PATH = path.join(process.cwd(), "diary_history.json");
+const DIARY_FILE_PATH = process.env.NC_DIARY_PATH || path.join(process.cwd(), "diary_history.json");
 
 // Ensure folder structure and standard files exist
 function ensureDirsAndFiles() {
@@ -1166,7 +1166,10 @@ ${learnedTextsContext || "（当前本地素材库为空，待用户通过资产
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    // In production, __dirname is usually the dist directory if bundled there
+    const distPath = process.env.NODE_ENV_DIST || path.join(__dirname);
+    // Since index.html is also in dist, we just use path.join(distPath, 'index.html')
+    // Wait, if it is running as dist/server.cjs, __dirname is dist.
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
