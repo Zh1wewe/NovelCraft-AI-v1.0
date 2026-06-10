@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import fs from "fs";
 
@@ -8,7 +7,7 @@ let aiClient: GoogleGenAI | null = null;
 function getAI() {
   if (!aiClient) {
     const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("GEMINI_API_KEY is missing");
+    if (!key) throw new Error("您既没有配置本地模型通道参数，也缺失系统兜底的 GEMINI_API_KEY。请在界面左侧【系统统一参数】中配置模型信息后再试！");
     aiClient = new GoogleGenAI({ apiKey: key });
   }
   return aiClient;
@@ -910,9 +909,39 @@ async function startServer() {
       if (!apiUrl || !apiKey || !model) {
         return res.status(400).json({ success: false, error: "缺少服务终结点(apiUrl)、密钥(apiKey)或模型名称" });
       }
-      res.json({ success: true, message: "连接测试成功，API配置有效" });
+
+      // 剔除 URL 末尾的 / 以防止双斜杠
+      const baseUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
+
+      // 进行一次真实的、只有极小消耗的 API ping，以检查 key 和通信
+      const authHeader = `Bearer ${apiKey}`;
+      const apiRes = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": authHeader
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: "user", content: "ping" }],
+          max_tokens: 1
+        })
+      });
+
+      if (!apiRes.ok) {
+        let errorMsg = `HTTP Error ${apiRes.status} ${apiRes.statusText}`;
+        try {
+          const errData = await apiRes.json();
+          if (errData.error && errData.error.message) {
+            errorMsg = errData.error.message;
+          }
+        } catch(e) {}
+        return res.status(apiRes.status < 500 ? 400 : 500).json({ success: false, error: "通信测试失败: " + errorMsg });
+      }
+
+      res.json({ success: true, message: "通信测试成功，模型响应正常！" });
     } catch (err: any) {
-      res.status(500).json({ success: false, error: err.message });
+      res.status(500).json({ success: false, error: err.message || "请求遭遇网络异常" });
     }
   });
 
@@ -1066,32 +1095,56 @@ ${learnedTextsContext || "（当前本地素材库为空，待用户通过资产
           throw new Error("模型提供商未返回有效的可读流");
         }
 
+        const webReader = reader.getReader();
+        const decoder = new TextDecoder("utf-8");
         let buffer = "";
-        for await (const chunk of reader as any) {
-          buffer += chunk.toString();
-          let boundary = buffer.indexOf("\n");
-          while (boundary !== -1) {
-            const line = buffer.substring(0, boundary).trim();
-            buffer = buffer.substring(boundary + 1);
-            boundary = buffer.indexOf("\n");
+        let isDone = false;
 
-            if (!line) continue;
-            if (line.startsWith("data:")) {
-              const dataVal = line.slice(5).trim();
-              if (dataVal === "[DONE]") {
-                continue;
-              }
-              try {
-                const parsed = JSON.parse(dataVal);
-                const text = parsed.choices?.[0]?.delta?.content || "";
-                if (text) {
-                  res.write(`data: ${JSON.stringify({ text })}\n\n`);
+        try {
+          while (!isDone) {
+            const { value, done } = await webReader.read();
+            if (done) {
+              isDone = true;
+              break;
+            }
+            buffer += decoder.decode(value, { stream: true });
+            
+            let boundary = buffer.indexOf("\n");
+            while (boundary !== -1) {
+              const line = buffer.substring(0, boundary).trim();
+              buffer = buffer.substring(boundary + 1);
+              boundary = buffer.indexOf("\n");
+
+              if (!line) continue;
+              if (line.startsWith("data:")) {
+                const dataVal = line.slice(5).trim();
+                // [DONE] marker indicates stream finish from provider
+                if (dataVal === "[DONE]") {
+                  continue;
                 }
-              } catch (err) {
-                // Ignore parsing errors for incomplete SSE packets
+                
+                try {
+                  const parsed = JSON.parse(dataVal);
+                  
+                  // Check if the stream actually returned an error inside SSE payload
+                  if (parsed.error) {
+                     const errorText = parsed.error.message || JSON.stringify(parsed.error);
+                     res.write(`data: ${JSON.stringify({ text: `\n\n【模型API调用失败】: ${errorText}` })}\n\n`);
+                     continue;
+                  }
+
+                  const text = parsed.choices?.[0]?.delta?.content || "";
+                  if (text) {
+                    res.write(`data: ${JSON.stringify({ text })}\n\n`);
+                  }
+                } catch (err) {
+                  // Ignore parsing errors for incomplete SSE packets
+                }
               }
             }
           }
+        } finally {
+          webReader.releaseLock();
         }
         res.write("data: [DONE]\n\n");
         res.end();
@@ -1160,6 +1213,7 @@ ${learnedTextsContext || "（当前本地素材库为空，待用户通过资产
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

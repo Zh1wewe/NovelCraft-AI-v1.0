@@ -742,6 +742,24 @@ export default function App() {
           }
         }
       }
+      
+      // If the stream finished but absolutely no content was received
+      if (!streamContent) {
+        updateCurrentProject(prev => ({
+          ...prev,
+          messages: prev.messages.map(m => {
+            if (m.id === assistantMessageId && m.content === '正在联想设定中...') {
+              return {
+                ...m,
+                content: '⚠️ 无法从模型或网络代理获取有效回复，可能是请求被拦截或模型本身故障未返回任何信息。',
+                type: 'text'
+              };
+            }
+            return m;
+          })
+        }));
+      }
+
       setIsGenerating(false);
       activeAbortControllerRef.current = null;
 
