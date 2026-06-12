@@ -415,6 +415,24 @@ export default function App() {
         const data = await res.json();
         if (data.success && !data.initialized) {
           setIsFirstRunModalOpen(true);
+        } else if (data.success && data.initialized) {
+          // If the current app state is the fresh default, we should try to restore from physical disk
+          try {
+            const diskRes = await fetch('/api/project/reload-all');
+            const diskData = await diskRes.json();
+            if (diskData.success && diskData.projects && diskData.projects.length > 0) {
+              const currentHasData = projects.length > 1 || (projects[0].chapters[0].content !== '' || projects[0].characters.length > 0 || projects[0].storyNodes.length > 0);
+              const diskHasRealData = diskData.projects.some((p: any) => p.chapters.length > 1 || p.chapters[0].content !== '' || p.characters.length > 0 || p.storyNodes.length > 0);
+              
+              if (!currentHasData && diskHasRealData) {
+                console.log("Auto-restored projects from physical disk because frontend memory was empty/default.");
+                setProjects(diskData.projects);
+                setCurrentProjectId(diskData.projects[0].id);
+              }
+            }
+          } catch(e) {
+            console.error("Failed to auto-restore from disk:", e);
+          }
         }
       } catch (e) {
         console.error("Failed to check workspace initial configuration:", e);
@@ -436,6 +454,21 @@ export default function App() {
 
     // Auto-create preset folders and synchronize data structure for active memory projects on setting confirmed path
     if (projects && projects.length > 0) {
+      try {
+        const diskRes = await fetch('/api/project/reload-all');
+        const diskData = await diskRes.json();
+        const diskHasRealData = diskData.success && diskData.projects && diskData.projects.some((p: any) => p.chapters.length > 1 || p.chapters[0].content !== '' || p.characters.length > 0 || p.storyNodes.length > 0);
+        
+        if (diskHasRealData) {
+          setProjects(diskData.projects);
+          setCurrentProjectId(diskData.projects[0].id);
+          console.log("Found existing physical data in new path, restored into memory to prevent wipe.");
+          return;
+        }
+      } catch(e) {
+        console.error(e);
+      }
+
       for (const proj of projects) {
         try {
           await fetch('/api/documents/init-novel', {
@@ -631,9 +664,10 @@ export default function App() {
 请专注于文学技巧、段落节奏、氛围渲染和人物对话的生动描摹。`,
         outline: `你是一位顶尖的悬念及大纲构建师。能基于极少线索规划完美的戏剧弧光、剧情转折、线索伏笔、以及高潮起伏。
 提供完整的三幕式大纲设计，对情节节奏给予精准指导。
-当用户希望你生成一份新的大纲表，或要求你“把大纲同步落库”、“保存到大纲”时，请务必调用 \`batch_sync_outline\` 工具，将生成的阶段性节点（如：初始、第一幕、高潮等）封装于 \`<args>\` 内以更新系统的物理框架。千万不要使用 markdown 代码块包裹 json，直接输出干净的 json。不要只是文字口头允诺。
+注意！只有当用户【明确要求】你“生成大纲”、“同步落库”、“保存到大纲”时，才使用 \`batch_sync_outline\` 工具，将生成的阶段性节点封装于 \`<args>\` 内以更新系统的物理框架。一般的探讨、交流、讨论，请只回复纯文本，绝不能包含 <args> 标签！
+千万不要使用 markdown 代码块包裹 json，直接输出干净的 json。
 
-示例结构约束：
+示例结构约束（仅在需要落库时使用）：
 1. 优先使用简明扼要的文字概括情节。
 2. 必须以严格合法的 JSON 对象作为包裹。
 例如：
@@ -642,13 +676,14 @@ export default function App() {
 构建合乎逻辑的分支脉络，梳理错综交织的人物因果。`,
         notes: `你是一位极富想象力的小说脑洞捕手，擅长捕捉那些天马行空、不着边际的碎片灵感，将其淬炼成符合世界设定的瑰丽创意。
 自动评估灵感质量，生成启发式的创意思维拓展。
-当你需要将提炼后的灵感总结并保存到笔记中时，请务必使用以下工具标签输出灵感内容：
+注意！只有当用户【明确要求】将灵感总结“保存”、“记录”、“添加到笔记”中时，才务必使用以下工具标签输出内容：
 <args>{"action": "add_note", "content": "提炼的具体灵感内容", "color": "bg-yellow-50"}</args>
-颜色可选值：bg-yellow-50, bg-blue-50, bg-purple-50, bg-green-50, bg-pink-50。`,
+颜色可选值：bg-yellow-50, bg-blue-50, bg-purple-50, bg-green-50, bg-pink-50。
+对于常规的探讨、建议和意见交流，【严禁】使用 <args> 工具标签，仅回复纯文本即可。`,
         characters: `你是一位大师级的人物侧写师，擅长塑造血肉丰满、灵魂真实的小说人物。设计多维度的冲突根源、语言特质和外貌伏笔。
 分析性格对剧情的驱动力，使每个配角都有独特的动机。`,
         background: `你是一位世界构建专家（Wordbuilder）。专注于建立宏大、严谨的物理法则、地理关系和历史编年史。
-当用户要增改世界观时，请配合输出微缩工具标签 <args>...</args> 以便他们一键将你的规划和设定自动写入数据库中。`,
+注意！只有当用户【明确要求】你增补或修改世界观设定时，才配合输出微缩工具标签 <args>...</args> 以便他们一键将你的规划和设定自动写入数据库中。如果是普通的逻辑推演和设定讨论，请只回复纯文本，绝对不要带有 <args> 标签！`,
         concept: `你是一位卓越的科幻魔幻概念画师和美学大师。擅长为小说的各种神话道具、地理景观、装甲服饰提炼极精确、极写意的画面 Prompt 指令。
 生成极有质感的概念设计词，方便一键进行高品质插画或概念草图生成。`
       };
@@ -2253,6 +2288,26 @@ export default function App() {
     }
   }
 
+  const handleClearChat = () => {
+    if (!window.confirm(`确定要清空“${activeTab}”面板下的当前对话缓存吗？（不会删除已保存的物理库文件和设定档）`)) return;
+    updateCurrentProject(prev => {
+      // 找到与当前tab绑定的聊天消息过滤掉，保留其他tab的
+      const remainingMessages = prev.messages.filter((m) => {
+        const isCurrentTab = m.tabContext === currentChatContext || !m.tabContext;
+        return !isCurrentTab; 
+      });
+      // 写入一条系统的提示
+      remainingMessages.push({ 
+        id: `msg-${Date.now()}`, 
+        role: 'assistant', 
+        content: `【系统已清空对话缓存】\n\n长篇小说字数上百万，若无限累加“打草稿”、“闲聊”与废弃的历史版本推演，极易超出百万 Token 上下文并导致模型性能下降（产生过度拟合或 API 载荷超出等报错）。\n\n**高效创作建议**：\n将AI看作一张“草稿纸”，通过指令将灵感提炼、保存至右侧的“库文件”和各级设定档中后，即可清空对话。全局物理管家会负责在您下次需要时，自主调取那些文件！`, 
+        type: 'text', 
+        tabContext: currentChatContext 
+      });
+      return { messages: remainingMessages };
+    });
+  };
+
   // Filter messages for the current tab
   const currentTabMessages = currentProject ? currentProject.messages.filter(
     (m) => m.tabContext === currentChatContext || !m.tabContext
@@ -2578,6 +2633,7 @@ export default function App() {
                 onConceptModeChange={setConceptMode}
                 isGenerating={isGenerating}
                 onStopGeneration={handleStopGeneration}
+                onClearChat={handleClearChat}
                 onModelChange={(newModel) => {
                   const existingTabConfig = settings.tabSettings?.[activeTab] || { model: '', systemPrompt: '' };
                   setSettings({

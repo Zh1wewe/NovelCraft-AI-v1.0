@@ -7,7 +7,7 @@ interface DirectoryInitModalProps {
 }
 
 export const DirectoryInitModal: React.FC<DirectoryInitModalProps> = ({ isOpen, onConfirm }) => {
-  const [path, setPath] = useState('C:\\小说物理资料库');
+  const [path, setPath] = useState('./小说物理资料库');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -73,7 +73,7 @@ export const DirectoryInitModal: React.FC<DirectoryInitModalProps> = ({ isOpen, 
                 disabled={success}
                 value={path}
                 onChange={(e) => setPath(e.target.value)}
-                placeholder="例如 C:\小说物理工作空间 或 /Users/workspace/novels"
+                placeholder="例如 ./小说物理工作空间 或 /Users/workspace/novels"
                 className="w-full text-xs px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono bg-white font-medium"
               />
             </div>
@@ -89,10 +89,10 @@ export const DirectoryInitModal: React.FC<DirectoryInitModalProps> = ({ isOpen, 
               <div className="flex flex-wrap gap-1.5">
                 <button
                   type="button"
-                  onClick={() => usePresetPath('C:\\小说物理资料库')}
+                  onClick={() => usePresetPath('./小说物理资料库')}
                   className="px-2 py-1 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[10px] font-bold rounded-md border border-gray-200 transition-colors cursor-pointer"
                 >
-                  C:\小说物理资料库
+                  安装目录/小说物理资料库 (默认)
                 </button>
                 <button
                   type="button"

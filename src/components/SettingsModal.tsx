@@ -720,7 +720,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                               type="text"
                               value={settings.storageDirectory || ''}
                               onChange={(e) => setSettings({ ...settings, storageDirectory: e.target.value })}
-                              placeholder="如 C:\小说物理资料库"
+                              placeholder="如 ./小说物理资料库"
                               className="w-full text-xs text-gray-700 px-2 py-1.5 border border-gray-300 rounded font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
                             />
                           </div>

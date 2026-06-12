@@ -1,7 +1,13 @@
 import express from "express";
 import path from "path";
+import { fileURLToPath } from 'url';
 import { GoogleGenAI } from "@google/genai";
 import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// If run from dist/server.cjs, __dirname is dist, so we may need to handle that, but typically it runs properly.
+const APP_ROOT = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dirname;
 
 let aiClient: GoogleGenAI | null = null;
 function getAI() {
@@ -13,24 +19,24 @@ function getAI() {
   return aiClient;
 }
 
-const CONFIG_FILE_PATH = process.env.NC_CONFIG_PATH || path.join(process.cwd(), "workspace_config.json");
+const CONFIG_FILE_PATH = process.env.NC_CONFIG_PATH || path.join(APP_ROOT, "workspace_config.json");
 
 function getUploadsBase(): string {
   try {
     if (fs.existsSync(CONFIG_FILE_PATH)) {
       const config = JSON.parse(fs.readFileSync(CONFIG_FILE_PATH, "utf-8"));
       if (config.baseDir) {
-        return path.resolve(config.baseDir.trim());
+        return path.resolve(APP_ROOT, config.baseDir.trim());
       }
     }
   } catch (err) {
     console.error("Failed to read workspace_config.json, returning default:", err);
   }
-  return process.env.NC_UPLOADS_DIR || path.join(process.cwd(), "uploads");
+  return process.env.NC_UPLOADS_DIR || path.join(APP_ROOT, "小说物理资料库");
 }
 
 let UPLOADS_BASE = getUploadsBase();
-const DIARY_FILE_PATH = process.env.NC_DIARY_PATH || path.join(process.cwd(), "diary_history.json");
+const DIARY_FILE_PATH = process.env.NC_DIARY_PATH || path.join(APP_ROOT, "diary_history.json");
 
 // Ensure folder structure and standard files exist
 function ensureDirsAndFiles() {
@@ -275,7 +281,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
   app.use("/uploads", express.static(UPLOADS_BASE));
 
   // Configuration APIs (Req 1, 5)
@@ -297,7 +304,7 @@ async function startServer() {
       const { baseDir } = req.body;
       if (!baseDir) return res.status(400).json({ success: false, error: "缺少保存路径" });
       
-      const targetPath = path.resolve(baseDir.trim());
+      const targetPath = path.resolve(APP_ROOT, baseDir.trim());
       fs.writeFileSync(CONFIG_FILE_PATH, JSON.stringify({ baseDir: targetPath, initialized: true }, null, 2), "utf-8");
       
       UPLOADS_BASE = targetPath;

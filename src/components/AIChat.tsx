@@ -155,6 +155,7 @@ interface AIChatProps {
   onStopGeneration?: () => void;
   conceptMode?: 'prompt' | 'image';
   onConceptModeChange?: (mode: 'prompt' | 'image') => void;
+  onClearChat?: () => void;
 }
 
 export const AIChat: React.FC<AIChatProps> = ({ 
@@ -171,7 +172,8 @@ export const AIChat: React.FC<AIChatProps> = ({
   isGenerating = false,
   onStopGeneration,
   conceptMode = 'image',
-  onConceptModeChange
+  onConceptModeChange,
+  onClearChat
 }) => {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const inputValue = drafts[tabId] || '';
@@ -229,6 +231,15 @@ export const AIChat: React.FC<AIChatProps> = ({
           <h2 className="text-sm font-semibold tracking-wider text-gray-700 flex items-center gap-1.5 select-none">
             <Sparkles className="w-4 h-4 text-purple-605 text-purple-600" />
             AI 对话辅助
+            {onClearChat && (
+              <button 
+                onClick={onClearChat}
+                className="ml-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                title="清空当前上下的文对话（不会删除入库的内容）"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </h2>
           
           {/* AI助手的模型选择功能栏 */}
@@ -407,8 +418,14 @@ export const AIChat: React.FC<AIChatProps> = ({
                           if (toolArgs.action === 'search_library_files') {
                             return `请确认：搜索本地文件夹 "${toolArgs.query || '所有数据'}"`;
                           }
+                          if (toolArgs.action === 'add_note') {
+                            return `请确认：提取并保存设定到【灵感小记】`;
+                          }
+                          if (toolArgs.action === 'batch_sync_outline') {
+                            return `请确认：一键同步生成大纲节点`;
+                          }
                         }
-                        return '请执行操作：对大纲或章节内容进行一键编排';
+                        return '请执行操作：采纳建议或一键编排';
                       })()}
                     </span>
                     <div className="flex items-center gap-2">
