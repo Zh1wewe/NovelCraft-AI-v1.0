@@ -333,6 +333,64 @@
         "required": ["action", "nodes"]
       },
       "example": "<args>{\"action\": \"batch_sync_outline\", \"nodes\": [{\"title\": \"第一幕：降临\", \"summary\": \"失去记忆的主角降临旧星市\", \"content\": \"主角在暴雨中醒来...\", \"timeLabel\": \"第一天\"}]}</args>"
+    },
+    {
+      "name": "add_note",
+      "action": "add_note",
+      "description": "保存脑洞、碎片灵感或总结记录保存到【灵感小记】卡片集中。当你认为用户的提问或想法产生了一个非常有价值的灵感设定、或者是用户明确提出“把这个保存到灵感小记/记录下来”时，必须调用此工具保存提炼出的一句话灵感。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["add_note"]
+          },
+          "content": {
+            "type": "string",
+            "description": "灵感的具体内容或提炼的精华描述"
+          },
+          "color": {
+            "type": "string",
+            "enum": ["bg-yellow-50", "bg-blue-50", "bg-purple-50", "bg-green-50", "bg-pink-50"],
+            "description": "卡片底色（默认为 bg-yellow-50）"
+          }
+        },
+        "required": ["action", "content"]
+      },
+      "example": "<args>{\"action\": \"add_note\", \"content\": \"神秘组织 '星辰之眼' 内部实际控制着所有的地下异能觉醒药剂交易。\", \"color\": \"bg-purple-50\"}</args>"
+    },
+    {
+      "name": "add_character",
+      "action": "add_character",
+      "description": "本地小说库操作：创建或记录一个新的人物角色设定档案。当用户提到新角色出场、设定新人物的性格与特质等，或者要求将某个人物记录到“人物设定”中时，必须调用此工具创建结构化的人物档案卡片。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["add_character"]
+          },
+          "name": {
+            "type": "string",
+            "description": "人物姓名。如林路、林默等"
+          },
+          "role": {
+            "type": "string",
+            "description": "角色的作品定位或身份头衔。如 男主角、野清道夫、信息素盲区者 等"
+          },
+          "description": {
+            "type": "string",
+            "description": "该人物详尽的背景故事、核心冲突设定与性格特色描述。支持分段长文。"
+          },
+          "traits": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "人物属性标签或极其凝练的特质词汇（最多5个）。如 ['冷酷', '执行力极强', '隐形石块']"
+          }
+        },
+        "required": ["action", "name", "role", "description"]
+      },
+      "example": "<args>{\"action\": \"add_character\", \"name\": \"林路\", \"role\": \"男主角，野清道夫（执念回收人）\", \"description\": \"天生信息素盲区者，在巨龙面前如同隐形石块，但他极其渴望获得真正的力量而非苟活...\", \"traits\": [\"信息素盲点\", \"生存意志坚定\"]}</args>"
     }
   ]
 }

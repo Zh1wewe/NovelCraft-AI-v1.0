@@ -154,16 +154,19 @@ export default function App() {
     const startX = e.clientX;
     let currentWidth = startWidth;
 
+    element.style.transition = 'none';
+
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const actualDelta = direction === 'left' ? -deltaX : deltaX;
       
+      const maxW = window.innerWidth * 0.85;
       if (type === 'chat') {
-        currentWidth = Math.max(180, Math.min(1000, startWidth + actualDelta));
+        currentWidth = Math.max(180, Math.min(maxW, startWidth + actualDelta));
       } else if (type === 'sidebar') {
-        currentWidth = Math.max(120, Math.min(600, startWidth + actualDelta));
+        currentWidth = Math.max(120, Math.min(maxW, startWidth + actualDelta));
       } else if (type === 'main') {
-        currentWidth = Math.max(280, Math.min(2200, startWidth + actualDelta));
+        currentWidth = Math.max(280, Math.min(window.innerWidth * 0.9, startWidth + actualDelta));
       }
       
       element.style.width = `${currentWidth}px`;
@@ -172,6 +175,8 @@ export default function App() {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      
+      element.style.transition = '';
       
       if (type === 'chat') {
         setChatWidth(prev => ({ ...prev, [activeTab]: currentWidth }));
@@ -200,10 +205,12 @@ export default function App() {
     const startY = e.clientY;
     let currentHeight = startHeight;
 
+    element.style.transition = 'none';
+
     const onMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
       const actualDelta = direction === 'top' ? -deltaY : deltaY;
-      currentHeight = Math.max(80, Math.min(1300, startHeight + actualDelta));
+      currentHeight = Math.max(80, Math.min(window.innerHeight * 0.9, startHeight + actualDelta));
       
       element.style.height = `${currentHeight}px`;
     };
@@ -211,6 +218,8 @@ export default function App() {
     const onMouseUp = () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
+      
+      element.style.transition = '';
       
       if (type === 'chat') {
         setChatHeight(prev => ({ ...prev, [activeTab]: currentHeight }));
@@ -632,7 +641,10 @@ export default function App() {
         mindmap: `你是一位思维发散与因果推理大师。帮助作者理清复杂的家族势力、力量体系、阴谋网络、以及线索链。
 构建合乎逻辑的分支脉络，梳理错综交织的人物因果。`,
         notes: `你是一位极富想象力的小说脑洞捕手，擅长捕捉那些天马行空、不着边际的碎片灵感，将其淬炼成符合世界设定的瑰丽创意。
-自动评估灵感质量，生成启发式的创意思维拓展。`,
+自动评估灵感质量，生成启发式的创意思维拓展。
+当你需要将提炼后的灵感总结并保存到笔记中时，请务必使用以下工具标签输出灵感内容：
+<args>{"action": "add_note", "content": "提炼的具体灵感内容", "color": "bg-yellow-50"}</args>
+颜色可选值：bg-yellow-50, bg-blue-50, bg-purple-50, bg-green-50, bg-pink-50。`,
         characters: `你是一位大师级的人物侧写师，擅长塑造血肉丰满、灵魂真实的小说人物。设计多维度的冲突根源、语言特质和外貌伏笔。
 分析性格对剧情的驱动力，使每个配角都有独特的动机。`,
         background: `你是一位世界构建专家（Wordbuilder）。专注于建立宏大、严谨的物理法则、地理关系和历史编年史。
@@ -787,7 +799,7 @@ export default function App() {
       console.warn("Backend chat failed, falling back to mock logic.", err);
       // Fallback
       setTimeout(() => {
-        let aiResponseContent = `收到！我已经结合了当前上下文，包括${currentContextLabels.join('和')}。需要我为您细化吗？`;
+        let aiResponseContent = `❌ 无法连接到模型或请求失败：\n\n\`\`\`json\n${err.message || 'Error'}\n\`\`\`\n\n> （提示：您可以检查在左侧设置中的 API 密钥和代理地址。由于无法接收到模型的回答，暂时无法继续正常探讨。）`;
         let aiResponseType: ChatMessage['type'] = 'text';
 
         // High-sensitivity world building detectors
@@ -1852,6 +1864,43 @@ export default function App() {
           } else {
             throw new Error(saveResult.error || '保存物理文件发生异常');
           }
+        } else if (args.action === 'add_note') {
+          const newNote = {
+            id: `note-${Date.now()}`,
+            content: args.content || '新灵感记录...',
+            createdAt: new Date().toISOString(),
+            color: args.color || 'bg-yellow-50'
+          };
+          updateCurrentProject(prev => ({
+            notes: [newNote, ...(prev.notes || [])],
+            messages: prev.messages.filter(m => m.id !== pendingMsgId).concat({
+              id: Date.now().toString(),
+              role: 'system',
+              content: `✅ 已成功提取并收录新的脑洞灵感到【灵感小记】卡片集中！可以在对应的面板中随时查阅。`,
+              type: 'text',
+              tabContext: 'notes'
+            })
+          }));
+          setActiveTab('notes');
+        } else if (args.action === 'add_character') {
+          const newChar = {
+            id: `char-${Date.now()}`,
+            name: args.name || '新角色',
+            role: args.role || '无定位',
+            description: args.description || '',
+            traits: args.traits || []
+          };
+          updateCurrentProject(prev => ({
+            characters: [newChar, ...(prev.characters || [])],
+            messages: prev.messages.filter(m => m.id !== pendingMsgId).concat({
+              id: Date.now().toString(),
+              role: 'system',
+              content: `✅ 已成功提取并收录新的角色设定卡片【${newChar.name}】到【人文设定】中！`,
+              type: 'text',
+              tabContext: 'characters'
+            })
+          }));
+          setActiveTab('characters');
         } else {
            updateCurrentProject(prev => ({
              messages: prev.messages.filter(m => m.id !== pendingMsgId).concat({
@@ -2298,6 +2347,18 @@ export default function App() {
     }
   };
 
+  const handleImportProject = (importedProject: NovelProject) => {
+    if (!importedProject || !importedProject.name) return;
+    const newProject = {
+      ...importedProject,
+      id: `proj-${Date.now()}`,
+      name: importedProject.name + " (归档恢复)"
+    };
+    setProjects(prev => [...prev, newProject]);
+    setCurrentProjectId(newProject.id);
+    alert("小说工程归档已被成功恢复为新项目。");
+  };
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans transition-colors duration-500" style={rootStyle}>
       <Header 
@@ -2600,6 +2661,8 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)} 
         settings={settings}
         setSettings={setSettings}
+        onImportProject={handleImportProject}
+        currentProject={currentProject}
       />
 
       <LibraryModal 

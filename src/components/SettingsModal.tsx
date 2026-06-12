@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { AppSettings, ModelProvider } from '../types';
-import { X, Network, Key, Server, Save, Folder, FileText, Check, Activity, AlertCircle, Edit2, Trash2, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AppSettings, ModelProvider, NovelProject } from '../types';
+import { X, Network, Key, Server, Save, Folder, FileText, Check, Activity, AlertCircle, Edit2, Trash2, Plus, Download } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: AppSettings;
   setSettings: (settings: AppSettings) => void;
+  onImportProject?: (project: NovelProject) => void;
+  currentProject?: NovelProject;
 }
 
 const defaultConstants = [
@@ -34,11 +36,24 @@ const defaultTabPrompts: Record<string, string> = {
 生成极有质感的概念设计词，方便一键进行高品质插画或概念草图生成。`
 };
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, setSettings }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, setSettings, onImportProject, currentProject }) => {
   const [activeTab, setActiveTab] = useState<'ai' | 'tabSettings' | 'storage'>('ai');
   const [selectedTabForConfig, setSelectedTabForConfig] = useState<string>('editor');
   const [isTestingConnection, setIsTestingConnection] = useState<boolean>(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  useEffect(() => {
+    if (isOpen && activeTab === 'storage') {
+      fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.baseDir) {
+            setSettings({ ...settings, storageDirectory: data.baseDir });
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isOpen, activeTab]);
 
   // Form states for adding or editing a provider
   const [isEditingProvider, setIsEditingProvider] = useState<boolean>(false);
@@ -240,20 +255,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
 
   const handleSelectDirectory = async () => {
     try {
-      if ('showDirectoryPicker' in window) {
-        const handle = await (window as any).showDirectoryPicker();
-        (window as any).storageDirHandle = handle;
-        setSettings({ ...settings, storageDirectory: handle.name });
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseDir: settings.storageDirectory })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('本地存储物理位置已成功更新（页面将刷新应用新路径）。');
+        window.location.reload();
       } else {
-        alert("当前浏览器不支持本地文件夹访问API");
+        alert(data.error || '无法更新目录。');
       }
     } catch (e: any) {
-      if (e.message?.includes('Cross origin') || e.name === 'SecurityError') {
-        alert("由于运行在平台预览窗口中（IFrame），为安全起见无法直接选择文件目录。\n\n如需设置本地文件夹，请使用预览框右上角的【在新标签页中打开】。当前将回退至普通下载模式。");
-      } else if (e.name !== 'AbortError') {
-        console.error(e);
-        alert("选择文件夹失败：" + e.message);
-      }
+      alert(e.message || '网络错误');
     }
   };
 
@@ -694,23 +709,94 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                     </p>
                     
                     <div className="p-4 border rounded-lg bg-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 text-blue-600 rounded-full">
+                      <div className="flex items-center gap-3 w-full max-w-xl">
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-full shrink-0">
                           <Folder className="w-5 h-5" />
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-gray-800">当前存储目录</div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {settings.storageDirectory ? settings.storageDirectory : '尚未选择目录'}
+                        <div className="grow">
+                          <div className="text-sm font-medium text-gray-800">当前存储目录（Absolute Path）</div>
+                          <div className="mt-1">
+                            <input
+                              type="text"
+                              value={settings.storageDirectory || ''}
+                              onChange={(e) => setSettings({ ...settings, storageDirectory: e.target.value })}
+                              placeholder="如 C:\小说物理资料库"
+                              className="w-full text-xs text-gray-700 px-2 py-1.5 border border-gray-300 rounded font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
                           </div>
                         </div>
                       </div>
                       <button 
                         onClick={handleSelectDirectory}
-                        className="px-3 py-1.5 bg-white border border-gray-300 text-xs font-semibold rounded hover:bg-gray-50 transition-colors cursor-pointer"
+                        className="px-3 py-1.5 ml-3 shrink-0 bg-blue-600 border border-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors cursor-pointer"
                       >
-                        选择文件夹
+                        更新并重启
                       </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider border-b pb-1.5 mb-4 mt-6">工程备份与恢复</h4>
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      将包含完整小说资料库内容和AI交互历史记录的当前工程导出到本地，或者随时导入之前保存的 .json 备份。导入的备份将作为新项目创建。
+                    </p>
+                    <div className="flex items-center gap-4 mt-2">
+                       <button
+                         onClick={() => {
+                           if (currentProject) {
+                             const blob = new Blob([JSON.stringify(currentProject, null, 2)], { type: "application/json" });
+                             const url = URL.createObjectURL(blob);
+                             const a = document.createElement("a");
+                             a.href = url;
+                             a.download = `${currentProject.name}_backup.json`;
+                             document.body.appendChild(a);
+                             a.click();
+                             document.body.removeChild(a);
+                             URL.revokeObjectURL(url);
+                           }
+                         }}
+                         className="px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 flex items-center gap-2 cursor-pointer transition-colors"
+                         disabled={!currentProject}
+                       >
+                         <Download className="w-4 h-4"/> 备份导出当前工作流
+                       </button>
+
+                       <div>
+                         <label
+                           htmlFor="import-project"
+                           className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm font-medium rounded-lg hover:bg-indigo-100 flex items-center gap-2 cursor-pointer transition-colors"
+                         >
+                           <Activity className="w-4 h-4"/> 从备份文件中恢复
+                         </label>
+                         <input
+                           id="import-project"
+                           type="file"
+                           accept=".json"
+                           className="hidden"
+                           onChange={(e) => {
+                             const file = e.target.files?.[0];
+                             if (file && onImportProject) {
+                               const reader = new FileReader();
+                               reader.onload = (event) => {
+                                 try {
+                                   const importedProj = JSON.parse(event.target?.result as string);
+                                   if (importedProj.name) {
+                                     onImportProject(importedProj);
+                                     onClose();
+                                   } else {
+                                     alert("无效的备份文件结构！");
+                                   }
+                                 } catch (err) {
+                                   alert("文件解析失败！");
+                                 }
+                               };
+                               reader.readAsText(file);
+                             }
+                           }}
+                         />
+                       </div>
                     </div>
                   </div>
                 </div>

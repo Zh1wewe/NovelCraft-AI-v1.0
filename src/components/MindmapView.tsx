@@ -204,11 +204,6 @@ const MindmapFlow: React.FC<MindmapViewProps> = ({ nodes, onGoToOutline, onAddNo
       >
         <Background color="#c7d2fe" gap={16} />
         <Controls className="bg-white/70 backdrop-blur-sm" />
-        <MiniMap 
-          nodeColor="#e0e7ff"
-          maskColor="rgba(255,255,255,0.4)"
-          className="bg-white/50 backdrop-blur-sm rounded-lg shadow-sm"
-        />
         <Panel position="top-right" className="bg-white/80 backdrop-blur-md px-4 py-2 flex gap-3 shadow-md border border-indigo-100 rounded-lg m-4">
           <div className="flex items-center gap-2">
             <Network className="w-5 h-5 text-indigo-600" />

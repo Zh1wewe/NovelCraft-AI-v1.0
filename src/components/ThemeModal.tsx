@@ -40,20 +40,61 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({ isOpen, onClose, theme, 
               </button>
             </div>
             {theme.backgroundType === 'color' ? (
-              <input 
-                type="color" 
-                value={theme.backgroundValue}
-                onChange={(e) => setTheme({ ...theme, backgroundValue: e.target.value })}
-                className="w-full h-10 p-1 rounded border border-gray-200 cursor-pointer"
-              />
+              <div className="flex flex-wrap gap-3 mt-4">
+                {[
+                  { name: '羊皮纸', value: '#fdf6e3' },
+                  { name: '淡青绿', value: '#e8f5e9' },
+                  { name: '天蓝色', value: '#e0f2fe' },
+                  { name: '樱花粉', value: '#fce7f3' },
+                  { name: '星空灰', value: '#1e293b' },
+                  { name: '极简白', value: '#ffffff' }
+                ].map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setTheme({ ...theme, backgroundValue: c.value })}
+                    className={`w-8 h-8 rounded-full border shadow-sm transition-transform hover:scale-110 ${theme.backgroundValue === c.value ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                    style={{ backgroundColor: c.value }}
+                    title={c.name}
+                  />
+                ))}
+                <div className="relative w-8 h-8 rounded-full border shadow-sm border-gray-200 overflow-hidden cursor-pointer hover:scale-110 transition-transform">
+                  <input 
+                    type="color" 
+                    value={theme.backgroundValue}
+                    onChange={(e) => setTheme({ ...theme, backgroundValue: e.target.value })}
+                    className="absolute -inset-4 w-16 h-16 cursor-pointer"
+                    title="自定义调色盘"
+                  />
+                </div>
+              </div>
             ) : (
-              <input 
-                type="text" 
-                placeholder="输入图片URL地址"
-                value={theme.backgroundValue}
-                onChange={(e) => setTheme({ ...theme, backgroundValue: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="mt-4">
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setTheme({ ...theme, backgroundValue: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100 cursor-pointer outline-none"
+                />
+                {theme.backgroundValue && theme.backgroundValue.startsWith('data:image') && (
+                  <div className="mt-3 w-full h-32 rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                    <img src={theme.backgroundValue} alt="当前背景" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

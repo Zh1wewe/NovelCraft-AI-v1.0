@@ -383,6 +383,15 @@ async function startServer() {
 
       // 1. Chapters sync
       if (project.chapters && Array.isArray(project.chapters)) {
+        const chaptersDir = path.join(novelDir, "正文");
+        if (fs.existsSync(chaptersDir)) {
+          const oldFiles = fs.readdirSync(chaptersDir);
+          for (const f of oldFiles) {
+            if (f.endsWith(".md") || f.endsWith(".txt")) {
+              fs.unlinkSync(path.join(chaptersDir, f));
+            }
+          }
+        }
         for (const ch of project.chapters) {
           const cleanTitle = (ch.title || "未命名章节").replace(/[\\/:*?"<>|]/g, "_");
           const filepath = path.join(novelDir, "正文", `${cleanTitle}.md`);
@@ -438,6 +447,15 @@ async function startServer() {
 
       // 5. Characters sync
       if (project.characters && Array.isArray(project.characters)) {
+        const charDir = path.join(novelDir, "人物设定");
+        if (fs.existsSync(charDir)) {
+          const oldFiles = fs.readdirSync(charDir);
+          for (const f of oldFiles) {
+            if (f.endsWith("_设定详情.md")) {
+              fs.unlinkSync(path.join(charDir, f));
+            }
+          }
+        }
         for (const char of project.characters) {
           const cleanName = (char.name || "无名氏").replace(/[\\/:*?"<>|]/g, "_");
           let charMd = `---\nrole: ${char.role || ''}\ntraits: [${(char.traits || []).join(', ')}]\n---\n\n`;
@@ -1014,7 +1032,7 @@ async function startServer() {
         : "当前暂无草稿章节。";
 
       // 2. Prepare final system instructions with injected learned context
-      const defaultSystemPrompt = `你是一位顶尖的多功能小说创作世界构建与大纲卡片编排辅助 AI。
+      const stateAndToolsInjection = `
 当前小说的真实数据状态如下：
 【世界基本法理和规则约束】：
 ${worldRulesText}
@@ -1031,7 +1049,7 @@ ${storyNodesText}
 【当前小说章节草稿目录】：
 ${chaptersText}
 
-日常沟通中，当用户对世界背景、基本法理、编年表、地理、章节正文修改，或者关于【大纲以及思维导图的情节节点更新、删除、新建】有倾向或请求时，请务必调用对应的外部工具指令。
+日常沟通中，当用户对世界背景、基本法理、编年表、地理、章节正文修改、灵感记录、人物档案录入，或者关于【大纲以及思维导图的情节节点更新、删除、新建】有倾向或请求时，请务必调用对应的外部工具指令。
 
 ================================================
 【AI可以调用的高精度本地编辑器/大纲/思维脑图工具规范与约束】
@@ -1042,8 +1060,8 @@ ${toolsSpecText || "无法读取工具JSON约束"}
 
 【绝对死线铁律】：对于任何涉及大纲卡片增删改（create_story_node/update_story_node/delete_story_node）、章节重写精修、或设定数据的操作，你必须在生成的文本回复的【最末尾】强制输出一模对应的格式完整的 <args>...</args> 指令包裹！例如，用户说“我想在大纲主线后加一个第四章，写他们遭遇暗物质风暴”，你必须计算出或提供该新增节点的 parentId 并输出 <args>{"action": "create_story_node", "parentId": "parent-id-if-any", "title": "第四章：暗物质风暴", "summary": "遭遇风暴并进行极限迫降，主角团内部分歧加剧", "content": "..."}</args>。绝对不能只进行文字陈述而不给出指令，因为没有指令用户无法一键一键应用！每条指令的 JSON 结构和属性必绝对精准。`;
 
-      const promptTemplateToUse = systemPrompt || defaultSystemPrompt;
-      const finalSystemPrompt = `${promptTemplateToUse}
+      const finalSystemPrompt = `${systemPrompt || "你是一位顶尖的多功能小说创作世界构建与大纲卡片编排辅助 AI。"}
+${stateAndToolsInjection}
 
 ================================================
 【AI已经收录并直接学习的本地参考资料及小说草稿文本】

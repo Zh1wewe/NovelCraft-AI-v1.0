@@ -182,6 +182,8 @@ export const AIChat: React.FC<AIChatProps> = ({
     }));
   };
 
+  const [hiddenUpToIndex, setHiddenUpToIndex] = useState<number>(0);
+
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const [userHasScrolled, setUserHasScrolled] = useState(false);
 
@@ -203,6 +205,11 @@ export const AIChat: React.FC<AIChatProps> = ({
 
   const handleSend = () => {
     if (inputValue.trim()) {
+      if (inputValue.trim().toLowerCase() === 'clear') {
+        setHiddenUpToIndex(messages.length);
+        setInputValue('');
+        return;
+      }
       onSendMessage(inputValue.trim());
       setInputValue('');
     }
@@ -307,7 +314,7 @@ export const AIChat: React.FC<AIChatProps> = ({
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 space-y-6 scroll-smooth"
       >
-        {messages.map((msg) => {
+        {messages.slice(hiddenUpToIndex).map((msg) => {
           if (msg.role === 'system') {
             const isUndoable = msg.content.includes('🔄 已撤回') || (msg.content.includes('✅') && (msg.content.includes('已成功') || msg.content.includes('已完成') || msg.content.includes('已一键生效') || msg.content.includes('已更新') || msg.content.includes('融入并保存') || msg.content.includes('主笔精修')));
             return (

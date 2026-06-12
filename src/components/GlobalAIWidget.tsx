@@ -54,10 +54,12 @@ export const GlobalAIWidget: React.FC<GlobalAIWidgetProps> = ({
   const [inputVal, setInputVal] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  
+  const [hiddenUpToIndex, setHiddenUpToIndex] = useState<number>(0);
 
   // Sync state to local storage when changed
   useEffect(() => {
-    if (currentProject?.id) {
+    if (currentProject?.id && messages.length > 0) {
       localStorage.setItem(`global_ai_msgs_v1_${currentProject.id}`, JSON.stringify(messages));
     }
   }, [messages, currentProject?.id]);
@@ -154,6 +156,12 @@ export const GlobalAIWidget: React.FC<GlobalAIWidgetProps> = ({
     if (!inputVal.trim() || isGenerating) return;
 
     const userText = inputVal.trim();
+    if (userText.toLowerCase() === 'clear') {
+      setHiddenUpToIndex(messages.length);
+      setInputVal('');
+      return;
+    }
+    
     setInputVal('');
 
     const newUsrMsg: ChatMessage = {
@@ -490,9 +498,18 @@ export const GlobalAIWidget: React.FC<GlobalAIWidgetProps> = ({
       {isOpen && (
         <div 
           id="global-ai-chat-sidebar" 
-          className="fixed top-0 right-0 h-screen w-[400px] max-w-[90vw] z-45 bg-[#0f172a]/95 backdrop-blur-md shadow-2xl border-l border-slate-800 flex flex-col justify-between text-slate-100 animate-slide-in-right"
+          className="fixed z-45 bg-[#0f172a]/95 backdrop-blur-md shadow-2xl border border-slate-700/50 rounded-2xl flex flex-col justify-between text-slate-100 overflow-hidden resize animate-fade-in"
           style={{
-            animation: 'slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+            top: '12vh',
+            left: 'calc(50vw - 225px)',
+            width: '450px',
+            height: '75vh',
+            minWidth: '300px',
+            minHeight: '400px',
+            maxWidth: '95vw',
+            maxHeight: '95vh',
+            animation: 'fadeIn 0.2s ease-out forwards',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
           }}
         >
           {/* Sidebar Top Banner Header */}
@@ -529,9 +546,9 @@ export const GlobalAIWidget: React.FC<GlobalAIWidgetProps> = ({
           <div 
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 p-4 overflow-y-auto space-y-4 text-xs scrollbar-thin scrollbar-thumb-slate-800/80 scroll-smooth"
+            className="flex-1 p-4 overflow-auto space-y-4 text-xs scrollbar-thin scrollbar-thumb-slate-800/80 scroll-smooth"
           >
-            {messages.map((msg, index) => {
+            {messages.slice(hiddenUpToIndex).map((msg, index) => {
               const isAssistant = msg.role === 'assistant';
               const isSystem = msg.role === 'system';
               const toolArgs = parseToolCall(msg.content);
